@@ -2,13 +2,12 @@
 <html>
 
 <head>
-
   <base target="_top">
 
   <meta name="viewport"
         content="width=device-width, initial-scale=1">
 
-  <title>Vigenère Cipher</title>
+  <title>Vigenère Cipher Public Feed</title>
 
   <style>
 
@@ -18,8 +17,8 @@
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f3f4f6;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f1f3f6;
       color: #222;
     }
 
@@ -164,6 +163,23 @@
       margin-top: 15px;
     }
 
+    .error {
+      background: #ffebee;
+      color: #b71c1c;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 15px;
+      word-break: break-word;
+    }
+
+    .success {
+      background: #e8f5e9;
+      color: #1b5e20;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+
     .footer {
       text-align: center;
       color: #777;
@@ -212,7 +228,7 @@
   </div>
 
 
-  <!-- ENCRYPT -->
+  <!-- CREATE MESSAGE -->
 
   <div class="card">
 
@@ -251,7 +267,6 @@
       💡 Use letters only for the key.
 
       Example:
-
       <strong>SECRET</strong>
 
     </div>
@@ -304,37 +319,17 @@
 
 <script>
 
-
 /*
 ================================================
-NEW WEB APP URL
+YOUR NEW WEB APP URL
 ================================================
 */
 
 const WEB_APP_URL =
-"https://script.google.com/macros/s/AKfycbwNAIHv4F5p1jzijn6HTXFIaN-ctH11BDLIPz5aJHJhokMFvNCjTuQdwwdCiybhiPZLBw/exec";
+"https://script.google.com/macros/s/AKfycbxejD7OkVJQCG1Mz8-F6N__ysUXYy6521wP5NYA4Znv0x27Kwf5vw5jvW3EwVeV4CBjEg/exec";
 
-
-/*
-================================================
-STORE CURRENT MESSAGES
-================================================
-*/
 
 let currentMessages = [];
-
-
-/*
-================================================
-VALIDATE KEY
-================================================
-*/
-
-function validKey(key) {
-
-  return /^[A-Za-z]+$/.test(key);
-
-}
 
 
 /*
@@ -351,11 +346,9 @@ function vigenereEncrypt(text, key) {
 
   let keyIndex = 0;
 
-
   for (let i = 0; i < text.length; i++) {
 
     const char = text[i];
-
 
     if (char >= "A" && char <= "Z") {
 
@@ -364,22 +357,17 @@ function vigenereEncrypt(text, key) {
           keyIndex % key.length
         ) - 65;
 
-
       result += String.fromCharCode(
-
         (
           char.charCodeAt(0)
           - 65
           + shift
         ) % 26 + 65
-
       );
-
 
       keyIndex++;
 
     }
-
 
     else if (char >= "a" && char <= "z") {
 
@@ -388,22 +376,17 @@ function vigenereEncrypt(text, key) {
           keyIndex % key.length
         ) - 65;
 
-
       result += String.fromCharCode(
-
         (
           char.charCodeAt(0)
           - 97
           + shift
         ) % 26 + 97
-
       );
-
 
       keyIndex++;
 
     }
-
 
     else {
 
@@ -413,9 +396,7 @@ function vigenereEncrypt(text, key) {
 
   }
 
-
   return result;
-
 }
 
 
@@ -433,11 +414,9 @@ function vigenereDecrypt(text, key) {
 
   let keyIndex = 0;
 
-
   for (let i = 0; i < text.length; i++) {
 
     const char = text[i];
-
 
     if (char >= "A" && char <= "Z") {
 
@@ -446,23 +425,18 @@ function vigenereDecrypt(text, key) {
           keyIndex % key.length
         ) - 65;
 
-
       result += String.fromCharCode(
-
         (
           char.charCodeAt(0)
           - 65
           - shift
           + 26
         ) % 26 + 65
-
       );
-
 
       keyIndex++;
 
     }
-
 
     else if (char >= "a" && char <= "z") {
 
@@ -471,23 +445,18 @@ function vigenereDecrypt(text, key) {
           keyIndex % key.length
         ) - 65;
 
-
       result += String.fromCharCode(
-
         (
           char.charCodeAt(0)
           - 97
           - shift
           + 26
         ) % 26 + 97
-
       );
-
 
       keyIndex++;
 
     }
-
 
     else {
 
@@ -497,71 +466,78 @@ function vigenereDecrypt(text, key) {
 
   }
 
-
   return result;
+}
+
+
+/*
+================================================
+VALIDATE KEY
+================================================
+*/
+
+function validKey(key) {
+
+  return /^[A-Za-z]+$/.test(key);
 
 }
 
 
 /*
 ================================================
-ENCRYPT AND SAVE
+ENCRYPT AND PUBLISH
 ================================================
 */
 
 function encryptAndSave() {
 
   const message =
-    document.getElementById(
-      "message"
-    ).value.trim();
-
+    document
+      .getElementById("message")
+      .value
+      .trim();
 
   const key =
-    document.getElementById(
-      "key"
-    ).value.trim();
-
+    document
+      .getElementById("key")
+      .value
+      .trim();
 
   const status =
-    document.getElementById(
-      "status"
-    );
+    document
+      .getElementById("status");
 
 
   if (message === "") {
 
     status.innerHTML =
-      "<p style='color:red'>" +
-      "Please enter a message." +
-      "</p>";
+      '<div class="error">' +
+      'Please enter a message.' +
+      '</div>';
 
     return;
-
   }
 
 
   if (key === "") {
 
     status.innerHTML =
-      "<p style='color:red'>" +
-      "Please enter a secret key." +
-      "</p>";
+      '<div class="error">' +
+      'Please enter a secret key.' +
+      '</div>';
 
     return;
-
   }
 
 
   if (!validKey(key)) {
 
     status.innerHTML =
-      "<p style='color:red'>" +
-      "The key must contain letters only." +
-      "</p>";
+      '<div class="error">' +
+      'The key must contain letters only.' +
+      '</div>';
 
     return;
-
   }
 
 
@@ -573,46 +549,43 @@ function encryptAndSave() {
 
 
   status.innerHTML =
-    "<p style='color:#555'>" +
-    "Saving message..." +
-    "</p>";
+    '<div>Saving message...</div>';
 
 
   google.script.run
 
-    .withSuccessHandler(function() {
+    .withSuccessHandler(
+      function(response) {
 
-      status.innerHTML =
-        "<p style='color:green'>" +
-        "✓ Message published successfully!" +
-        "</p>";
+        status.innerHTML =
+          '<div class="success">' +
+          '✓ Message saved successfully!' +
+          '</div>';
 
+        document
+          .getElementById("message")
+          .value = "";
 
-      document.getElementById(
-        "message"
-      ).value = "";
+        document
+          .getElementById("key")
+          .value = "";
 
+        loadMessages();
 
-      document.getElementById(
-        "key"
-      ).value = "";
+      }
+    )
 
+    .withFailureHandler(
+      function(error) {
 
-      loadMessages();
+        status.innerHTML =
+          '<div class="error">' +
+          '❌ ' +
+          escapeHTML(error.message) +
+          '</div>';
 
-    })
-
-
-    .withFailureHandler(function(error) {
-
-      status.innerHTML =
-        "<p style='color:red'>" +
-        "Error: " +
-        error.message +
-        "</p>";
-
-    })
-
+      }
+    )
 
     .saveMessage(
       ciphertext,
@@ -625,35 +598,48 @@ function encryptAndSave() {
 
 /*
 ================================================
-LOAD MESSAGES
+LOAD PUBLIC FEED
 ================================================
 */
 
 function loadMessages() {
 
+  const feed =
+    document.getElementById("feed");
+
+
+  feed.innerHTML =
+    '<div class="loading">' +
+    'Loading messages...' +
+    '</div>';
+
+
   google.script.run
 
-    .withSuccessHandler(function(messages) {
+    .withSuccessHandler(
+      function(messages) {
 
-      currentMessages =
-        messages;
+        currentMessages =
+          messages;
 
-      displayMessages(
-        messages
-      );
+        displayMessages(
+          messages
+        );
 
-    })
+      }
+    )
 
-    .withFailureHandler(function(error) {
+    .withFailureHandler(
+      function(error) {
 
-      document.getElementById(
-        "feed"
-      ).innerHTML =
-        "<p style='color:red'>" +
-        "Unable to load messages." +
-        "</p>";
+        feed.innerHTML =
+          '<div class="error">' +
+          '❌ ' +
+          escapeHTML(error.message) +
+          '</div>';
 
-    })
+      }
+    )
 
     .getMessages();
 
@@ -669,35 +655,31 @@ DISPLAY MESSAGES
 function displayMessages(messages) {
 
   const feed =
-    document.getElementById(
-      "feed"
-    );
+    document.getElementById("feed");
 
 
   feed.innerHTML = "";
 
 
-  if (messages.length === 0) {
+  if (
+    !messages ||
+    messages.length === 0
+  ) {
 
     feed.innerHTML =
-      "<div class='empty'>" +
-      "No encrypted messages yet." +
-      "</div>";
+      '<div class="empty">' +
+      'No encrypted messages yet.' +
+      '</div>';
 
     return;
-
   }
 
 
   messages.forEach(
     function(message, index) {
 
-
       const div =
-        document.createElement(
-          "div"
-        );
-
+        document.createElement("div");
 
       div.className =
         "message";
@@ -718,13 +700,11 @@ function displayMessages(messages) {
 
         </div>
 
-
         <p>
           <strong>
             🔐 Encrypted Message:
           </strong>
         </p>
-
 
         <div class="ciphertext">
 
@@ -734,54 +714,35 @@ function displayMessages(messages) {
 
         </div>
 
-
         <label>
           Secret Key
         </label>
 
-
         <input
-
           type="text"
-
           id="decryptKey${index}"
-
           placeholder="Enter keyword"
-
           autocomplete="off"
-
         >
 
-
         <button
-
           class="decrypt-btn"
-
           onclick="decryptMessage(${index})"
-
         >
 
           🔓 Try to Decrypt
 
         </button>
 
-
         <div
-
           class="result"
-
           id="result${index}"
-
-        >
-
-        </div>
+        ></div>
 
       `;
 
 
-      feed.appendChild(
-        div
-      );
+      feed.appendChild(div);
 
     }
   );
@@ -798,15 +759,19 @@ DECRYPT MESSAGE
 function decryptMessage(index) {
 
   const key =
-    document.getElementById(
-      "decryptKey" + index
-    ).value.trim();
+    document
+      .getElementById(
+        "decryptKey" + index
+      )
+      .value
+      .trim();
 
 
   const result =
-    document.getElementById(
-      "result" + index
-    );
+    document
+      .getElementById(
+        "result" + index
+      );
 
 
   if (key === "") {
@@ -817,7 +782,6 @@ function decryptMessage(index) {
     );
 
     return;
-
   }
 
 
@@ -829,7 +793,6 @@ function decryptMessage(index) {
     );
 
     return;
-
   }
 
 
@@ -848,22 +811,16 @@ function decryptMessage(index) {
   result.style.display =
     "block";
 
-
   result.style.background =
     "#e8f5e9";
-
 
   result.style.color =
     "#1b5e20";
 
 
   result.innerHTML =
-
     "<strong>Your Decryption:</strong><br>" +
-
-    escapeHTML(
-      plaintext
-    );
+    escapeHTML(plaintext);
 
 }
 
@@ -882,14 +839,11 @@ function showError(
   element.style.display =
     "block";
 
-
   element.style.background =
     "#ffebee";
 
-
   element.style.color =
     "#b71c1c";
-
 
   element.innerHTML =
     message;
@@ -906,14 +860,10 @@ ESCAPE HTML
 function escapeHTML(text) {
 
   const div =
-    document.createElement(
-      "div"
-    );
-
+    document.createElement("div");
 
   div.textContent =
     text;
-
 
   return div.innerHTML;
 
@@ -922,19 +872,20 @@ function escapeHTML(text) {
 
 /*
 ================================================
-LOAD PAGE
+START PAGE
 ================================================
 */
 
-window.onload =
+window.addEventListener(
+  "load",
   function() {
 
     loadMessages();
 
-  };
+  }
+);
 
 </script>
-
 
 </body>
 
