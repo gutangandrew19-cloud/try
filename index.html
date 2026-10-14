@@ -1,892 +1,540 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-  <base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CIA Triad Reviewer</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1">
+<style>
+/* ============================================================
+   THEME  (change these colors / the background image freely)
+   ============================================================ */
+:root{
+  --bg1:#05070f;
+  --bg2:#0d1430;
+  --text:#eef1ff;
+  --muted:#aab3d6;
+  --line:rgba(170,190,255,.55);
+  --card:rgba(10,14,32,.82);
+  --conf:#5aa2ff;      /* Confidentiality */
+  --integ:#b58cff;     /* Integrity */
+  --avail:#3fe0b5;     /* Availability */
+  --found:#9db4ff;     /* Foundations */
+  --bal:#ffc46b;       /* Balancing / Response */
+  --bg-image:none;     /* e.g. url("photo.jpg") */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  color:var(--text);
+  background:radial-gradient(ellipse at 30% 0%,var(--bg2),var(--bg1) 70%) fixed;
+  min-height:100vh;
+  overflow-x:hidden;
+}
 
-  <title>Vigenère Cipher Public Feed</title>
+/* ---------- background layers ---------- */
+#photo{
+  position:fixed;inset:0;z-index:-3;
+  background:var(--bg-image) center/cover no-repeat;
+  opacity:.35;filter:saturate(.8) blur(1px);
+  transition:opacity .6s;
+}
+#stars{position:fixed;inset:0;z-index:-2;width:100%;height:100%}
+.blob{
+  position:fixed;z-index:-2;border-radius:50%;filter:blur(90px);opacity:.28;
+  animation:float 18s ease-in-out infinite alternate;pointer-events:none;
+}
+.blob.b1{width:380px;height:380px;background:var(--conf);top:-80px;left:-80px}
+.blob.b2{width:340px;height:340px;background:var(--integ);bottom:5%;right:-60px;animation-delay:-6s}
+.blob.b3{width:300px;height:300px;background:var(--avail);top:45%;left:35%;animation-delay:-11s;opacity:.15}
+@keyframes float{
+  from{transform:translate(0,0) scale(1)}
+  to{transform:translate(60px,-50px) scale(1.2)}
+}
 
-  <style>
+/* ---------- header ---------- */
+header{
+  text-align:center;padding:38px 16px 10px;
+  animation:fadeDown .9s ease both;
+}
+header h1{
+  font-family:'Cormorant Garamond',serif;
+  font-weight:600;font-size:clamp(1.9rem,5vw,3.2rem);
+  letter-spacing:.14em;text-transform:uppercase;
+  text-shadow:0 0 30px rgba(120,150,255,.55);
+}
+header p{color:var(--muted);margin-top:8px;font-size:.95rem;letter-spacing:.04em}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:none}}
 
-    * {
-      box-sizing: border-box;
-    }
+.hud{
+  display:flex;flex-wrap:wrap;gap:14px;justify-content:center;align-items:center;
+  margin:18px auto 0;padding:0 16px;max-width:900px;
+}
+.progress{
+  display:flex;align-items:center;gap:10px;font-size:.82rem;color:var(--muted);
+}
+.bar{width:160px;height:6px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,var(--conf),var(--integ),var(--avail));
+  transition:width .6s cubic-bezier(.3,1.2,.4,1)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.78rem;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend b{width:10px;height:10px;transform:rotate(45deg);border-radius:2px;background:var(--c);box-shadow:0 0 8px var(--c)}
+.btn{
+  font:inherit;font-size:.78rem;color:var(--text);cursor:pointer;
+  padding:7px 13px;border-radius:99px;border:1px solid rgba(255,255,255,.22);
+  background:rgba(255,255,255,.06);transition:.25s;
+}
+.btn:hover{background:rgba(255,255,255,.16);transform:translateY(-1px)}
+.btn input{display:none}
 
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f1f3f6;
-      color: #222;
-    }
+/* ---------- stage ---------- */
+#stage{position:relative;width:min(1100px,100%);margin:10px auto 60px}
+#lines{position:absolute;inset:0;pointer-events:none;overflow:visible}
+#lines path{
+  fill:none;stroke:var(--line);stroke-width:2;stroke-linecap:round;
+  stroke-dasharray:1 9;opacity:0;
+  animation:lineIn .8s ease forwards,march 1.4s linear infinite;
+}
+#lines path.done{stroke:#fff;stroke-width:2.6;filter:drop-shadow(0 0 5px #8fb0ff)}
+@keyframes lineIn{to{opacity:.9}}
+@keyframes march{to{stroke-dashoffset:-20}}
 
-    .container {
-      width: 92%;
-      max-width: 900px;
-      margin: 35px auto;
-    }
+/* ---------- nodes ---------- */
+.node{
+  position:absolute;width:42px;height:42px;margin:-21px 0 0 -21px;
+  background:none;border:0;cursor:pointer;color:#fff;
+  opacity:0;animation:pop .7s cubic-bezier(.2,1.5,.4,1) forwards;
+  animation-delay:calc(var(--i) * 80ms + .3s);
+  z-index:2;
+}
+@keyframes pop{from{opacity:0;transform:scale(0) rotate(-90deg)}to{opacity:1;transform:none}}
 
-    .header {
-      background: #222;
-      color: white;
-      padding: 30px;
-      border-radius: 15px;
-      text-align: center;
-      margin-bottom: 25px;
-    }
+.gem{
+  position:absolute;inset:0;display:grid;place-items:center;
+  border-radius:7px;transform:rotate(45deg);
+  border:1.5px solid rgba(255,255,255,.75);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--c) 70%,#fff 10%),color-mix(in srgb,var(--c) 35%,#101840));
+  box-shadow:0 0 14px color-mix(in srgb,var(--c) 70%,transparent);
+  transition:transform .3s cubic-bezier(.3,1.6,.5,1),box-shadow .3s,filter .3s;
+  animation:bob 4s ease-in-out infinite;animation-delay:calc(var(--i) * -.5s);
+}
+@keyframes bob{50%{box-shadow:0 0 22px color-mix(in srgb,var(--c) 90%,transparent)}}
+.gem span{transform:rotate(-45deg);font-weight:600;font-size:.88rem;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.node:hover .gem,.node:focus-visible .gem{transform:rotate(45deg) scale(1.22);filter:brightness(1.2)}
+.node:focus-visible{outline:none}
+.node:focus-visible .gem{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.4)}
 
-    .header h1 {
-      margin: 0 0 10px;
-      font-size: 32px;
-    }
+.node.visited .gem{filter:brightness(1.08);border-color:#fff}
+.node.visited::before{
+  content:"✓";position:absolute;top:-14px;right:-14px;z-index:3;
+  width:18px;height:18px;border-radius:50%;display:grid;place-items:center;
+  font-size:.68rem;font-weight:700;color:#06101f;background:#fff;
+  animation:pop .4s ease both;
+}
+.node.active .gem{
+  transform:rotate(45deg) scale(1.4);
+  background:linear-gradient(135deg,#fff,var(--c));
+  box-shadow:0 0 34px var(--c),0 0 70px color-mix(in srgb,var(--c) 60%,transparent);
+}
+.node.active .gem span{color:#07102a;text-shadow:none}
+.node.active .gem::after{
+  content:"";position:absolute;inset:-9px;border-radius:12px;
+  border:2px solid var(--c);animation:ring 1.5s ease-out infinite;
+}
+@keyframes ring{from{opacity:.9;transform:scale(.8)}to{opacity:0;transform:scale(1.6)}}
 
-    .header p {
-      margin: 0;
-      color: #ddd;
-    }
+.tip{
+  position:absolute;left:58px;top:50%;transform:translateY(-50%) translateX(-6px);
+  white-space:nowrap;font-size:.76rem;padding:5px 10px;border-radius:8px;
+  background:rgba(8,12,28,.9);border:1px solid rgba(255,255,255,.18);
+  opacity:0;pointer-events:none;transition:.25s;
+}
+.node:hover .tip{opacity:1;transform:translateY(-50%)}
+.node.active .tip{display:none}
 
-    .card {
-      background: white;
-      padding: 25px;
-      border-radius: 15px;
-      margin-bottom: 25px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
+/* click ripple */
+.burst{
+  position:absolute;width:10px;height:10px;border-radius:50%;pointer-events:none;z-index:4;
+  background:var(--c);box-shadow:0 0 10px var(--c);
+  animation:burst .8s ease-out forwards;
+}
+@keyframes burst{
+  to{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}
+}
 
-    .card h2 {
-      margin-top: 0;
-    }
+/* ---------- info card ---------- */
+#card{
+  position:absolute;z-index:10;width:310px;
+  padding:18px 18px 14px;border-radius:12px;
+  background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.55);
+  box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 30px color-mix(in srgb,var(--c,#7aa0ff) 35%,transparent);
+  opacity:0;visibility:hidden;transform:translateY(12px) scale(.94);
+  transition:opacity .3s,transform .35s cubic-bezier(.2,1.4,.4,1),visibility .3s;
+}
+#card.show{opacity:1;visibility:visible;transform:none}
+#card .badge{
+  display:inline-flex;align-items:center;gap:6px;font-size:.66rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--c);margin-bottom:8px;
+}
+#card .badge::before{content:"";width:7px;height:7px;transform:rotate(45deg);background:var(--c);box-shadow:0 0 8px var(--c)}
+#card h2{font-family:'Cormorant Garamond',serif;font-size:1.45rem;line-height:1.15;margin-bottom:8px;font-weight:600}
+#card .desc{font-size:.84rem;line-height:1.6;color:#d9def7}
+#card .fact{
+  margin-top:10px;padding:8px 10px;border-left:3px solid var(--c);border-radius:4px;
+  background:rgba(255,255,255,.06);font-size:.78rem;color:var(--text)
+}
+#card .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+#card .links a{
+  font-size:.72rem;color:var(--text);text-decoration:none;padding:5px 10px;border-radius:99px;
+  border:1px solid var(--c);transition:.2s;
+}
+#card .links a:hover{background:var(--c);color:#06101f}
+#card .nav{display:flex;align-items:center;justify-content:space-between;margin-top:14px;font-size:.72rem;color:var(--muted)}
+#card .nav button{
+  font:inherit;cursor:pointer;color:var(--text);padding:5px 12px;border-radius:99px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);transition:.2s;
+}
+#card .nav button:hover:not(:disabled){background:rgba(255,255,255,.2)}
+#card .nav button:disabled{opacity:.3;cursor:default}
+#card .x{
+  position:absolute;top:8px;right:10px;width:26px;height:26px;border-radius:50%;
+  border:0;background:rgba(255,255,255,.08);color:var(--text);cursor:pointer;font-size:.9rem;transition:.2s;
+}
+#card .x:hover{background:rgba(255,255,255,.22);transform:rotate(90deg)}
+#card > *{animation:rise .5s ease both}
+#card > *:nth-child(2){animation-delay:.05s}
+#card > *:nth-child(3){animation-delay:.1s}
+#card > *:nth-child(4){animation-delay:.15s}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-    label {
-      display: block;
-      font-weight: bold;
-      margin-top: 18px;
-      margin-bottom: 7px;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 130px;
-      resize: vertical;
-      padding: 13px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-
-    input {
-      width: 100%;
-      padding: 13px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-
-    button {
-      border: none;
-      border-radius: 8px;
-      padding: 12px 20px;
-      font-size: 15px;
-      cursor: pointer;
-      margin-top: 15px;
-    }
-
-    .encrypt-btn {
-      background: #222;
-      color: white;
-    }
-
-    .encrypt-btn:hover {
-      background: #444;
-    }
-
-    .decrypt-btn {
-      background: #1976d2;
-      color: white;
-    }
-
-    .decrypt-btn:hover {
-      background: #125ca1;
-    }
-
-    .info {
-      background: #e3f2fd;
-      padding: 12px;
-      border-radius: 8px;
-      margin-top: 12px;
-      font-size: 14px;
-    }
-
-    .message {
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 18px;
-      margin-top: 15px;
-      background: #fafafa;
-    }
-
-    .ciphertext {
-      font-size: 18px;
-      font-weight: bold;
-      word-break: break-word;
-      background: #eee;
-      padding: 14px;
-      border-radius: 7px;
-      margin: 10px 0;
-      letter-spacing: 1px;
-    }
-
-    .timestamp {
-      font-size: 13px;
-      color: #777;
-      margin-bottom: 10px;
-    }
-
-    .result {
-      display: none;
-      margin-top: 12px;
-      padding: 13px;
-      border-radius: 7px;
-      word-break: break-word;
-    }
-
-    .empty,
-    .loading {
-      text-align: center;
-      color: #777;
-      padding: 25px;
-    }
-
-    #status {
-      margin-top: 15px;
-    }
-
-    .error {
-      background: #ffebee;
-      color: #b71c1c;
-      padding: 12px;
-      border-radius: 8px;
-      margin-top: 15px;
-      word-break: break-word;
-    }
-
-    .success {
-      background: #e8f5e9;
-      color: #1b5e20;
-      padding: 12px;
-      border-radius: 8px;
-      margin-top: 15px;
-    }
-
-    .footer {
-      text-align: center;
-      color: #777;
-      font-size: 13px;
-      margin-top: 25px;
-    }
-
-    @media (max-width: 600px) {
-
-      .container {
-        width: 95%;
-        margin: 20px auto;
-      }
-
-      .header h1 {
-        font-size: 25px;
-      }
-
-      .card {
-        padding: 18px;
-      }
-
-    }
-
-  </style>
-
+/* ---------- mobile: bottom sheet ---------- */
+@media (max-width:700px){
+  #card{
+    position:fixed;left:10px;right:10px;bottom:10px;top:auto !important;width:auto;
+    transform:translateY(40px);
+  }
+  #card.show{transform:none}
+  .bar{width:110px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
+</style>
 </head>
 
-
 <body>
+<div id="photo"></div>
+<canvas id="stars"></canvas>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
 
-<div class="container">
-
-
-  <!-- HEADER -->
-
-  <div class="header">
-
-    <h1>🔐 Vigenère Cipher</h1>
-
-    <p>
-      Encrypt a message and challenge others
-      to decrypt it.
-    </p>
-
-  </div>
-
-
-  <!-- CREATE MESSAGE -->
-
-  <div class="card">
-
-    <h2>🔒 Create Encrypted Message</h2>
-
-    <p>
-      Enter your message and create a secret
-      keyword.
-    </p>
-
-
-    <label for="message">
-      Message
-    </label>
-
-    <textarea
-      id="message"
-      placeholder="Enter your message..."
-    ></textarea>
-
-
-    <label for="key">
-      Secret Key
-    </label>
-
-    <input
-      type="text"
-      id="key"
-      placeholder="Example: SECRET"
-      autocomplete="off"
-    >
-
-
-    <div class="info">
-
-      💡 Use letters only for the key.
-
-      Example:
-      <strong>SECRET</strong>
-
+<header>
+  <h1>CIA Triad Reviewer</h1>
+  <p id="subtitle">Click each number to review the topic</p>
+  <div class="hud">
+    <div class="progress">
+      <span id="count">Studied 0 / 0</span>
+      <div class="bar"><i id="barfill"></i></div>
     </div>
-
-
-    <button
-      class="encrypt-btn"
-      onclick="encryptAndSave()">
-
-      🔒 Encrypt & Publish
-
-    </button>
-
-
-    <div id="status"></div>
-
-  </div>
-
-
-  <!-- PUBLIC FEED -->
-
-  <div class="card">
-
-    <h2>🌐 Public Message Feed</h2>
-
-    <p>
-      Try to decrypt messages posted by other
-      users.
-    </p>
-
-
-    <div id="feed">
-
-      <div class="loading">
-        Loading messages...
-      </div>
-
+    <div class="legend">
+      <span style="--c:var(--found)"><b></b>Foundations</span>
+      <span style="--c:var(--conf)"><b></b>Confidentiality</span>
+      <span style="--c:var(--integ)"><b></b>Integrity</span>
+      <span style="--c:var(--avail)"><b></b>Availability</span>
+      <span style="--c:var(--bal)"><b></b>Balance &amp; Response</span>
     </div>
-
+    <label class="btn">🖼 Background photo<input type="file" id="bgfile" accept="image/*"></label>
+    <button class="btn" id="reset">↺ Reset</button>
   </div>
+</header>
 
+<main id="stage">
+  <svg id="lines"></svg>
+  <div id="nodes"></div>
 
-  <div class="footer">
-    Vigenère Cipher Public Message System
-  </div>
-
-
-</div>
-
+  <aside id="card" role="dialog" aria-live="polite">
+    <button class="x" id="close" aria-label="Close">✕</button>
+    <div class="badge" id="c-badge"></div>
+    <h2 id="c-title"></h2>
+    <p class="desc" id="c-desc"></p>
+    <div class="fact" id="c-fact"></div>
+    <div class="links" id="c-links"></div>
+    <div class="nav">
+      <button id="prev">← Prev</button>
+      <span id="c-pos"></span>
+      <button id="next">Next →</button>
+    </div>
+  </aside>
+</main>
 
 <script>
+/* ============================================================
+   CONTENT  — edit titles / descriptions here
+   tag: found | conf | integ | avail | bal
+   ============================================================ */
+const OWNER = "Prepared by Andrew Gutang";   // set to "" to hide
 
-/*
-================================================
-YOUR NEW WEB APP URL
-================================================
-*/
+const TAGS = {
+  found:{label:"Foundations",      color:"var(--found)"},
+  conf: {label:"Confidentiality",  color:"var(--conf)"},
+  integ:{label:"Integrity",        color:"var(--integ)"},
+  avail:{label:"Availability",     color:"var(--avail)"},
+  bal:  {label:"Balance & Response",color:"var(--bal)"}
+};
 
-const WEB_APP_URL =
-"https://script.google.com/macros/s/AKfycbxejD7OkVJQCG1Mz8-F6N__ysUXYy6521wP5NYA4Znv0x27Kwf5vw5jvW3EwVeV4CBjEg/exec";
+const TOPICS = [
+  {tag:"found", title:"Evolution of the Triad",
+   desc:"The CIA concepts began in 1970s–80s military computing research, while banking systems stressed data integrity. Today they form the backbone of global security standards.",
+   fact:"Used in ISO/IEC 27001, NIST CSF and EU GDPR Article 32."},
 
+  {tag:"found", title:"The Three Pillars",
+   desc:"Confidentiality limits data to authorized people. Integrity keeps data accurate and unaltered. Availability keeps systems and data reachable when needed.",
+   fact:"C = Secrecy · I = Trustworthiness · A = Access."},
 
-let currentMessages = [];
+  {tag:"conf", title:"Confidentiality",
+   desc:"Only the people who are allowed can see sensitive information. It protects data from unauthorized exposure, leaks and prying eyes.",
+   fact:"Goal: prevent unauthorized data viewing."},
 
+  {tag:"conf", title:"Confidentiality Controls",
+   desc:"Use AES-256 encryption at rest and TLS 1.3 in transit, role-based access control (least privilege), adaptive MFA, and data classification.",
+   fact:"Classes: Public · Internal · Confidential · Restricted.",
+   links:[{t:"Cipher Editor",u:"https://ciphereditor.com/"},
+          {t:"CyberChef",u:"https://gchq.github.io/CyberChef/"}]},
 
-/*
-================================================
-VIGENERE ENCRYPTION
-================================================
-*/
+  {tag:"conf", title:"Confidentiality Breach Cost",
+   desc:"Losing confidentiality causes GDPR/HIPAA penalties, brand damage, leaked intellectual property and customer churn after credential theft or phishing.",
+   fact:"Global average breach cost: $4.45M."},
 
-function vigenereEncrypt(text, key) {
+  {tag:"conf", title:"Defending Against Exposure",
+   desc:"Threats include misconfigured S3 buckets, malicious insiders and social engineering. Zero Trust Architecture and continuous endpoint detection limit lateral movement.",
+   fact:"ZTA = never trust, always verify."},
 
-  key = key.toUpperCase();
+  {tag:"integ", title:"Integrity",
+   desc:"Data stays complete, accurate, authentic and uncorrupted over its entire lifecycle. Unauthorized changes must be prevented or detected.",
+   fact:"Goal: prevent unauthorized modification."},
 
-  let result = "";
+  {tag:"integ", title:"Integrity Verification",
+   desc:"Hashes such as SHA-256 reveal tampering instantly. Digital signatures give non-repudiation and origin proof, and write-once audit logs trace data lineage.",
+   fact:"Change one bit → the hash changes completely.",
+   links:[{t:"Hash File Online",u:"https://hash-file.online/"},
+          {t:"Hash Demo",u:"https://andersbrownworth.com/blockchain/hash"}]},
 
-  let keyIndex = 0;
+  {tag:"integ", title:"Real-World Integrity Risks",
+   desc:"Examples: financial record tampering, software supply chain attacks, medical record corruption, and attackers deleting logs to cover their tracks.",
+   fact:"Integrity failures can harm money, code and patients."},
 
-  for (let i = 0; i < text.length; i++) {
+  {tag:"integ", title:"Confidentiality vs Integrity",
+   desc:"Confidentiality fights eavesdropping, credential stuffing and phishing with AES, RBAC and MFA. Integrity fights MITM, malware and ransomware with hashing, signatures and FIM.",
+   fact:"Together: end-to-end encrypted & signed communication."},
 
-    const char = text[i];
+  {tag:"avail", title:"Availability",
+   desc:"Systems, infrastructure and data stay reliably accessible to authorized users whenever they need them, without interruption.",
+   fact:"Goal: continuous, reliable access."},
 
-    if (char >= "A" && char <= "Z") {
+  {tag:"avail", title:"Causes of System Downtime",
+   desc:"DDoS cyberattacks and unexpected hardware outages account for most enterprise service availability disruptions.",
+   fact:"About 60% of disruptions."},
 
-      const shift =
-        key.charCodeAt(
-          keyIndex % key.length
-        ) - 65;
+  {tag:"avail", title:"Building High Availability",
+   desc:"Remove single points of failure with hardware redundancy, geographic clustering and load balancing. Immutable 3-2-1 backups enable rapid disaster recovery after ransomware.",
+   fact:"3-2-1 = 3 copies · 2 media types · 1 off-site.",
+   links:[{t:"JSFiddle",u:"https://jsfiddle.net/"}]},
 
-      result += String.fromCharCode(
-        (
-          char.charCodeAt(0)
-          - 65
-          + shift
-        ) % 26 + 65
-      );
+  {tag:"bal", title:"Strategic Balancing",
+   desc:"The three pillars involve trade-offs. Organizations prioritize them by regulatory demands, business domain and tolerance for operational friction.",
+   fact:"More security often means less convenience."},
 
-      keyIndex++;
+  {tag:"bal", title:"CIA Incident Response Plan",
+   desc:"Detect which pillar is affected, Contain by isolating compromised endpoints, Verify integrity with hash checks, then Restore via failover to redundant nodes.",
+   fact:"Detect → Contain → Verify → Restore."},
 
+  {tag:"bal", title:"The Triad in Practice",
+   desc:"Security is not a product but a process. The CIA Triad is the compass used to calibrate every technical control and policy.",
+   fact:"Review · Apply · Balance · Repeat."}
+];
+
+/* ============================================================
+   ENGINE
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const stage = $('#stage'), nodesEl = $('#nodes'), svg = $('#lines'), card = $('#card');
+const N = TOPICS.length;
+const SPACING = 78;
+let pts = [], nodeEls = [], active = -1;
+let studied = new Set();
+
+try{ studied = new Set(JSON.parse(localStorage.getItem('cia-studied')||'[]')); }catch(e){}
+const save = () => { try{ localStorage.setItem('cia-studied', JSON.stringify([...studied])); }catch(e){} };
+
+$('#subtitle').textContent = OWNER ? OWNER + " · click each number to review" : "Click each number to review the topic";
+
+/* ----- build nodes ----- */
+TOPICS.forEach((t,i)=>{
+  const b = document.createElement('button');
+  b.className = 'node';
+  b.style.setProperty('--i', i);
+  b.style.setProperty('--c', TAGS[t.tag].color);
+  b.setAttribute('aria-label', `Topic ${i+1}: ${t.title}`);
+  b.innerHTML = `<div class="gem"><span>${i+1}</span></div><div class="tip">${t.title}</div>`;
+  b.addEventListener('click', e => { e.stopPropagation(); openTopic(i, true); });
+  nodesEl.appendChild(b);
+  nodeEls.push(b);
+});
+
+/* ----- layout: winding path ----- */
+function layout(){
+  const W = stage.clientWidth;
+  const H = Math.max(window.innerHeight - 260, N * SPACING + 60);
+  stage.style.height = H + 'px';
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  const amp = Math.min(.34, 170 / W + .12);
+
+  pts = TOPICS.map((_,i)=>({
+    x: W * (.5 + amp * Math.sin(i * .9 + .3)),
+    y: 40 + (H - 80) * (i / (N - 1))
+  }));
+  pts.forEach((p,i)=>{ nodeEls[i].style.left = p.x + 'px'; nodeEls[i].style.top = p.y + 'px'; });
+  drawLines();
+  if(active > -1) placeCard(active);
+}
+
+function drawLines(){
+  svg.innerHTML = '';
+  for(let i=0;i<N-1;i++){
+    const a = pts[i], b = pts[i+1], my = (a.y + b.y) / 2;
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d', `M${a.x},${a.y} C${a.x},${my} ${b.x},${my} ${b.x},${b.y}`);
+    p.style.animationDelay = `${i*80+500}ms, 0s`;
+    if(studied.has(i) && studied.has(i+1)) p.classList.add('done');
+    svg.appendChild(p);
+  }
+}
+
+/* ----- card ----- */
+function placeCard(i){
+  if(window.innerWidth <= 700){ card.style.top = ''; card.style.left = ''; return; }
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const cw = card.offsetWidth, ch = card.offsetHeight, p = pts[i];
+  let left = p.x + 46;
+  if(left + cw > W - 6) left = p.x - 46 - cw;
+  if(left < 6) left = Math.max(6, (W - cw) / 2);
+  let top = p.y - 50;
+  top = Math.max(6, Math.min(top, H - ch - 6));
+  card.style.left = left + 'px';
+  card.style.top = top + 'px';
+}
+
+function openTopic(i, scroll){
+  const t = TOPICS[i], tag = TAGS[t.tag];
+  active = i;
+  nodeEls.forEach((n,k)=> n.classList.toggle('active', k === i));
+  studied.add(i); save();
+  nodeEls[i].classList.add('visited');
+
+  card.style.setProperty('--c', tag.color);
+  $('#c-badge').textContent = tag.label;
+  $('#c-title').textContent = t.title;
+  $('#c-desc').textContent = t.desc;
+  $('#c-fact').textContent = "💡 " + t.fact;
+  $('#c-fact').style.display = t.fact ? '' : 'none';
+  $('#c-links').innerHTML = (t.links||[]).map(l =>
+    `<a href="${l.u}" target="_blank" rel="noopener">${l.t} ↗</a>`).join('');
+  $('#c-pos').textContent = `${i+1} / ${N}`;
+  $('#prev').disabled = i === 0;
+  $('#next').disabled = i === N - 1;
+
+  // restart entrance animations
+  card.classList.remove('show');
+  [...card.children].forEach(c => { c.style.animation='none'; c.offsetHeight; c.style.animation=''; });
+  placeCard(i);
+  requestAnimationFrame(()=> card.classList.add('show'));
+
+  burst(i);
+  updateProgress();
+  drawLines();
+  if(scroll) nodeEls[i].scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function closeCard(){
+  card.classList.remove('show');
+  nodeEls.forEach(n => n.classList.remove('active'));
+  active = -1;
+}
+
+/* ----- particle burst on click ----- */
+function burst(i){
+  const p = pts[i], color = TAGS[TOPICS[i].tag].color;
+  for(let k=0;k<14;k++){
+    const d = document.createElement('i');
+    d.className = 'burst';
+    const ang = Math.random() * Math.PI * 2, dist = 40 + Math.random() * 60;
+    d.style.cssText = `left:${p.x-5}px;top:${p.y-5}px;--c:${color};--dx:${Math.cos(ang)*dist}px;--dy:${Math.sin(ang)*dist}px`;
+    stage.appendChild(d);
+    setTimeout(()=> d.remove(), 850);
+  }
+}
+
+/* ----- progress ----- */
+function updateProgress(){
+  $('#count').textContent = `Studied ${studied.size} / ${N}`;
+  $('#barfill').style.width = (studied.size / N * 100) + '%';
+}
+
+/* ----- events ----- */
+$('#close').onclick = closeCard;
+$('#prev').onclick = () => active > 0 && openTopic(active - 1, true);
+$('#next').onclick = () => active < N - 1 && openTopic(active + 1, true);
+card.addEventListener('click', e => e.stopPropagation());
+document.addEventListener('click', closeCard);
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') closeCard();
+  if(e.key === 'ArrowRight' || e.key === 'ArrowDown'){ e.preventDefault(); openTopic(active < 0 ? 0 : Math.min(active+1, N-1), true); }
+  if(e.key === 'ArrowLeft'  || e.key === 'ArrowUp'  ){ e.preventDefault(); openTopic(active < 0 ? 0 : Math.max(active-1, 0), true); }
+});
+$('#reset').onclick = e => {
+  e.stopPropagation();
+  studied.clear(); save();
+  nodeEls.forEach(n => n.classList.remove('visited'));
+  closeCard(); updateProgress(); drawLines();
+};
+$('#bgfile').addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  document.documentElement.style.setProperty('--bg-image', `url("${URL.createObjectURL(f)}")`);
+});
+let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(layout, 80); });
+
+/* ----- twinkling starfield ----- */
+(function stars(){
+  const cv = $('#stars'), ctx = cv.getContext('2d');
+  let w, h, list = [];
+  function size(){
+    w = cv.width = innerWidth; h = cv.height = innerHeight;
+    list = Array.from({length: Math.floor(w*h/9000)}, () => ({
+      x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.4+.2,
+      s:Math.random()*.25+.03, p:Math.random()*6.28, v:Math.random()*.03+.01
+    }));
+  }
+  function frame(){
+    ctx.clearRect(0,0,w,h);
+    for(const s of list){
+      s.p += s.v; s.y -= s.s; if(s.y < -2){ s.y = h + 2; s.x = Math.random()*w; }
+      ctx.globalAlpha = .35 + .65 * Math.abs(Math.sin(s.p));
+      ctx.fillStyle = '#cfdcff';
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.283); ctx.fill();
     }
-
-    else if (char >= "a" && char <= "z") {
-
-      const shift =
-        key.charCodeAt(
-          keyIndex % key.length
-        ) - 65;
-
-      result += String.fromCharCode(
-        (
-          char.charCodeAt(0)
-          - 97
-          + shift
-        ) % 26 + 97
-      );
-
-      keyIndex++;
-
-    }
-
-    else {
-
-      result += char;
-
-    }
-
+    requestAnimationFrame(frame);
   }
-
-  return result;
-}
-
-
-/*
-================================================
-VIGENERE DECRYPTION
-================================================
-*/
-
-function vigenereDecrypt(text, key) {
-
-  key = key.toUpperCase();
-
-  let result = "";
-
-  let keyIndex = 0;
-
-  for (let i = 0; i < text.length; i++) {
-
-    const char = text[i];
-
-    if (char >= "A" && char <= "Z") {
-
-      const shift =
-        key.charCodeAt(
-          keyIndex % key.length
-        ) - 65;
-
-      result += String.fromCharCode(
-        (
-          char.charCodeAt(0)
-          - 65
-          - shift
-          + 26
-        ) % 26 + 65
-      );
-
-      keyIndex++;
-
-    }
-
-    else if (char >= "a" && char <= "z") {
-
-      const shift =
-        key.charCodeAt(
-          keyIndex % key.length
-        ) - 65;
-
-      result += String.fromCharCode(
-        (
-          char.charCodeAt(0)
-          - 97
-          - shift
-          + 26
-        ) % 26 + 97
-      );
-
-      keyIndex++;
-
-    }
-
-    else {
-
-      result += char;
-
-    }
-
-  }
-
-  return result;
-}
-
-
-/*
-================================================
-VALIDATE KEY
-================================================
-*/
-
-function validKey(key) {
-
-  return /^[A-Za-z]+$/.test(key);
-
-}
-
-
-/*
-================================================
-ENCRYPT AND PUBLISH
-================================================
-*/
-
-function encryptAndSave() {
-
-  const message =
-    document
-      .getElementById("message")
-      .value
-      .trim();
-
-  const key =
-    document
-      .getElementById("key")
-      .value
-      .trim();
-
-  const status =
-    document
-      .getElementById("status");
-
-
-  if (message === "") {
-
-    status.innerHTML =
-      '<div class="error">' +
-      'Please enter a message.' +
-      '</div>';
-
-    return;
-  }
-
-
-  if (key === "") {
-
-    status.innerHTML =
-      '<div class="error">' +
-      'Please enter a secret key.' +
-      '</div>';
-
-    return;
-  }
-
-
-  if (!validKey(key)) {
-
-    status.innerHTML =
-      '<div class="error">' +
-      'The key must contain letters only.' +
-      '</div>';
-
-    return;
-  }
-
-
-  const ciphertext =
-    vigenereEncrypt(
-      message,
-      key
-    );
-
-
-  status.innerHTML =
-    '<div>Saving message...</div>';
-
-
-  google.script.run
-
-    .withSuccessHandler(
-      function(response) {
-
-        status.innerHTML =
-          '<div class="success">' +
-          '✓ Message saved successfully!' +
-          '</div>';
-
-        document
-          .getElementById("message")
-          .value = "";
-
-        document
-          .getElementById("key")
-          .value = "";
-
-        loadMessages();
-
-      }
-    )
-
-    .withFailureHandler(
-      function(error) {
-
-        status.innerHTML =
-          '<div class="error">' +
-          '❌ ' +
-          escapeHTML(error.message) +
-          '</div>';
-
-      }
-    )
-
-    .saveMessage(
-      ciphertext,
-      message,
-      key
-    );
-
-}
-
-
-/*
-================================================
-LOAD PUBLIC FEED
-================================================
-*/
-
-function loadMessages() {
-
-  const feed =
-    document.getElementById("feed");
-
-
-  feed.innerHTML =
-    '<div class="loading">' +
-    'Loading messages...' +
-    '</div>';
-
-
-  google.script.run
-
-    .withSuccessHandler(
-      function(messages) {
-
-        currentMessages =
-          messages;
-
-        displayMessages(
-          messages
-        );
-
-      }
-    )
-
-    .withFailureHandler(
-      function(error) {
-
-        feed.innerHTML =
-          '<div class="error">' +
-          '❌ ' +
-          escapeHTML(error.message) +
-          '</div>';
-
-      }
-    )
-
-    .getMessages();
-
-}
-
-
-/*
-================================================
-DISPLAY MESSAGES
-================================================
-*/
-
-function displayMessages(messages) {
-
-  const feed =
-    document.getElementById("feed");
-
-
-  feed.innerHTML = "";
-
-
-  if (
-    !messages ||
-    messages.length === 0
-  ) {
-
-    feed.innerHTML =
-      '<div class="empty">' +
-      'No encrypted messages yet.' +
-      '</div>';
-
-    return;
-  }
-
-
-  messages.forEach(
-    function(message, index) {
-
-      const div =
-        document.createElement("div");
-
-      div.className =
-        "message";
-
-
-      const date =
-        new Date(
-          message.timestamp
-        );
-
-
-      div.innerHTML = `
-
-        <div class="timestamp">
-
-          Posted:
-          ${date.toLocaleString()}
-
-        </div>
-
-        <p>
-          <strong>
-            🔐 Encrypted Message:
-          </strong>
-        </p>
-
-        <div class="ciphertext">
-
-          ${escapeHTML(
-            message.ciphertext
-          )}
-
-        </div>
-
-        <label>
-          Secret Key
-        </label>
-
-        <input
-          type="text"
-          id="decryptKey${index}"
-          placeholder="Enter keyword"
-          autocomplete="off"
-        >
-
-        <button
-          class="decrypt-btn"
-          onclick="decryptMessage(${index})"
-        >
-
-          🔓 Try to Decrypt
-
-        </button>
-
-        <div
-          class="result"
-          id="result${index}"
-        ></div>
-
-      `;
-
-
-      feed.appendChild(div);
-
-    }
-  );
-
-}
-
-
-/*
-================================================
-DECRYPT MESSAGE
-================================================
-*/
-
-function decryptMessage(index) {
-
-  const key =
-    document
-      .getElementById(
-        "decryptKey" + index
-      )
-      .value
-      .trim();
-
-
-  const result =
-    document
-      .getElementById(
-        "result" + index
-      );
-
-
-  if (key === "") {
-
-    showError(
-      result,
-      "Please enter a secret key."
-    );
-
-    return;
-  }
-
-
-  if (!validKey(key)) {
-
-    showError(
-      result,
-      "The key must contain letters only."
-    );
-
-    return;
-  }
-
-
-  const ciphertext =
-    currentMessages[index]
-      .ciphertext;
-
-
-  const plaintext =
-    vigenereDecrypt(
-      ciphertext,
-      key
-    );
-
-
-  result.style.display =
-    "block";
-
-  result.style.background =
-    "#e8f5e9";
-
-  result.style.color =
-    "#1b5e20";
-
-
-  result.innerHTML =
-    "<strong>Your Decryption:</strong><br>" +
-    escapeHTML(plaintext);
-
-}
-
-
-/*
-================================================
-SHOW ERROR
-================================================
-*/
-
-function showError(
-  element,
-  message
-) {
-
-  element.style.display =
-    "block";
-
-  element.style.background =
-    "#ffebee";
-
-  element.style.color =
-    "#b71c1c";
-
-  element.innerHTML =
-    message;
-
-}
-
-
-/*
-================================================
-ESCAPE HTML
-================================================
-*/
-
-function escapeHTML(text) {
-
-  const div =
-    document.createElement("div");
-
-  div.textContent =
-    text;
-
-  return div.innerHTML;
-
-}
-
-
-/*
-================================================
-START PAGE
-================================================
-*/
-
-window.addEventListener(
-  "load",
-  function() {
-
-    loadMessages();
-
-  }
-);
-
+  size(); frame(); addEventListener('resize', size);
+})();
+
+/* ----- go! ----- */
+layout();
+updateProgress();
+nodeEls.forEach((n,i)=>{ if(studied.has(i)) n.classList.add('visited'); });
+drawLines();
 </script>
-
 </body>
-
 </html>
